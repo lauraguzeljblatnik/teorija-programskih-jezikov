@@ -116,7 +116,7 @@ subst σ TRUE = TRUE
 subst σ FALSE = TRUE
 subst σ (IF M THEN M₁ ELSE M₂) = IF (subst σ M) THEN (subst σ M₁) ELSE (subst σ M₂)
 subst σ (M ∙ N) = (subst σ M) ∙ subst σ N
-subst σ (ƛ {A = A} M) = ƛ (subst {!   !} M)
+subst σ (ƛ {A = A} M) = ƛ (subst {! σ !} M)
 
 data value : {Γ : Ctx} {A : Ty} → Γ ⊢ A → Set where
     value-TRUE : {Γ : Ctx} →
