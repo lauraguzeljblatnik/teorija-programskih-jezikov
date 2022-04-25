@@ -69,8 +69,8 @@ exts : {Γ Δ : Ctx } →
     ({A : Ty} → A ∈ Γ → Δ ⊢ A ) → 
     ---------------------------
     {A B : Ty} →  A ∈ (Γ , B) → (Δ , B) ⊢ A
-exts σ {A} Z = VAR Z
-exts σ {A} (S x) = rename S (σ x)
+exts σ  Z = VAR Z
+exts σ (S x) = rename S (σ x)
 
 subsMulti : {Γ Δ : Ctx } →
     ({A : Ty} → A ∈ Γ → Δ ⊢ A ) → --spremenljivke slikamo v izraze
@@ -110,13 +110,16 @@ lookup : {Γ Δ : Ctx} {A : Ty} → Γ ⇉ Δ → A ∈ Γ → Δ ⊢ A
 lookup (σ , M) Z = M
 lookup (σ , _) (S x) = lookup σ x
 
-subst : {Γ Δ : Ctx} {A : Ty} → Γ ⇉ Δ → Γ ⊢ A → Δ ⊢ A
-subst σ (VAR x) = lookup σ x
+subst : {Γ Δ : Ctx}
+  → ({A : Ty} → A ∈ Γ → Δ ⊢ A)
+    -------------------------
+  → {A : Ty} → Γ ⊢ A → Δ ⊢ A
+subst σ (VAR x) = σ x
 subst σ TRUE = TRUE
 subst σ FALSE = TRUE
 subst σ (IF M THEN M₁ ELSE M₂) = IF (subst σ M) THEN (subst σ M₁) ELSE (subst σ M₂)
 subst σ (M ∙ N) = (subst σ M) ∙ subst σ N
-subst σ (ƛ {A = A} M) = ƛ (subst {! σ !} M)
+subst σ (ƛ M) = ƛ ( subst (exts σ) M)
 
 data value : {Γ : Ctx} {A : Ty} → Γ ⊢ A → Set where
     value-TRUE : {Γ : Ctx} →
@@ -152,7 +155,7 @@ data _↝_ : {A : Ty} → ∅ ⊢ A → ∅ ⊢ A → Set where
     APP-BETA : {A B : Ty} {M : (∅ , A) ⊢ B} {N : ∅ ⊢ A} →
         value N →
         ------------------------------------------------
-        ((ƛ M) ∙ N) ↝ subst ([] , N) M
+        ((ƛ M) ∙ N) ↝ ( M [ N ])
 
 data Progress : {A : Ty} → ∅ ⊢ A → Set where
     is-value : {A : Ty} {M : ∅ ⊢ A} →
