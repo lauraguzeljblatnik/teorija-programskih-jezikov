@@ -55,38 +55,51 @@ module List where
         _∷_ : A → List A → List A
 
     l1 : List ℕ
-    l1 = {!   !}
+    l1 = []
 
     l2 : List ℕ
-    l2 = {!   !}
+    l2 = O ∷ []
 
     l3 : List ℕ
-    l3 = {!   !}
+    l3 = S O ∷ O ∷ S O ∷ []
 
     -- Definirajte nekaj osnovnih operacij na seznamih
     -- V pomoč naj vam bodo testi na koncu funkcij
-    _++_ : {!   !}
-    _++_ = {!   !}
+    _++_ : {A : Set} → List A → List A → List A 
+    [] ++ ys = ys
+    (x ∷ xs) ++ ys = x ∷ ( xs ++ ys)
 
-    len : {!   !}
-    len = {!   !}
+    len : {A : Set} → List A → ℕ
+    len [] = O
+    len (x ∷ xs) = S (len (xs))
 
-    reverse : {!   !}
-    reverse = {!   !}
+    reverse : {A : Set} → List A → List A
+    reverse [] = []
+    reverse (x ∷ xs) =  rev-aux xs []
+        where 
+        rev-aux : {A : Set} → List A → List A → List A 
+        rev-aux [] ys = ys
+        rev-aux (x ∷ xs) ys = rev-aux xs (x ∷ ys)  
 
-    map : {!   !}
-    map = {!   !}
+    map : {A B : Set} → (A → B) → List A → List B
+    map f [] = []
+    map f (x ∷ xs) = f x ∷ (map f xs)
 
     -- Ko potrebujemo dodatno informacijo si pomagamo z with
 
     filter : {A : Set} → (A → 𝔹) → List A → List A
     filter f [] = []
-    filter f (x ∷ l) with f x   
-    ... | 𝕗 = filter f l
-    ... | 𝕥 = x ∷ (filter f l)
+    filter f (x ∷ l) with f x    -- with sprejme 3 arg, f, sez in rezultat ce f apliciramo f na x
+    ... | 𝕗 = filter f l        -- ... zato da ne pisemo vsega (lahko bi pisali: filter f (_ :: l |))
+    ... | 𝕥 = x ∷ (filter f l)      -- matchamo glede na 3 arg, glede na rezultat f x
 
-    _[_] : {!   !}
-    _[_] = {!   !}
+    -- indeksiranje, seznam in hocemo el na mestu i
+    -- option ker ni nujno da el obstaja 
+    _[_] : {A : Set} → List A → ℕ → Maybe A
+    [] [ O ] = nothing
+    [] [ S n ] = nothing
+    x ∷ xs [ O ] = just x
+    x ∷ xs [ S n ] = xs [ n ]
 
 -- Odvisni tipi
 
@@ -110,38 +123,49 @@ module Vector where
     -- Za določene tipe vektorjev lahko vedno dobimo glavo in rep
 
     head : {A : Set} → {n : ℕ} → Vector A (S n) → A
-    head = {!   !}
+    head (x ∷ xs) = x
 
-    tail : {!   !}
-    tail = {!   !}
+    tail : {A : Set} → {n : ℕ} → Vector A (S n) → Vector A n
+    tail (x ∷ xs) = xs
 
-    map : {!   !}
-    map = {!   !}
+    map : {A B : Set} → {n : ℕ} → (A → B) → Vector A n → Vector B n
+    map f [] = []
+    map f (x ∷ xs) = f x ∷ ( map f xs)
 
     -- Sedaj lahko napišemo bolj informativni obliki funkcij `zip` in `unzip`
 
     zip : {A B : Set} → {n : ℕ} → Vector A n → Vector B n → Vector (Pair A B) n
-    zip = {!   !}
+    zip [] [] = []
+    zip (x ∷ xs) (y ∷ ys) = ( x , y ) ∷ (zip xs ys)
 
-    unzip : {!   !}
-    unzip = {!   !}
+    unzip : {A B : Set} → {n : ℕ} → Vector (Pair A B) n → Pair (Vector A n) (Vector B n)
+    unzip [] = ( [] , [] )
+    unzip ((fst , snd) ∷ v) with unzip v
+    ... | a , b = ((fst ∷ a) , (snd ∷ b))
+   
 
     -- S pomočjo tipa `Fin` je indeksiranje varno
     -- Namig: Naj vam agda pomaga pri vzorcih (hkrati lahko razbijemo več vzorcev nanekrat)
+    -- fin je manjsi od n! 
     _[_] : {A : Set} {n : ℕ} -> Vector A n -> Fin n -> A
-    _[_] = {!   !}
+    [] [ () ] --  () pomeni vzorec, ki se ne more zgoditi, nemogoc vzorec, na prazno izpolnjen
+    x ∷ v [ Fo ] = x
+    x ∷ v [ Fs i ] = v [ i ]
 
     -- Dobro preučite tip in povejte kaj pomeni
     fromℕ : (n : ℕ) → Fin (S n)
-    fromℕ = {!   !}
+    fromℕ O = Fo
+    fromℕ (S n) = Fs (fromℕ n)
 
-    toℕ : {!   !}
-    toℕ = {!   !}
+    toℕ : {n : ℕ} → Fin (n) → ℕ
+    toℕ Fo = O
+    toℕ (Fs n) = S (toℕ n ) 
     
     init : {A : Set} → (n : ℕ) → (x : A) -> Vector A n
-    init = {!   !}
+    init O x = []
+    init (S n) x = x ∷ ( init n x )
     
-    vecToList : {!   !}
+    vecToList : {A : Set} → {n : ℕ} -> Vector A n → List.List A
     vecToList = {!   !}
 
     -- V tipih lahko nastopaju tudi povsem običajne funkcije
@@ -208,3 +232,5 @@ module Variadic where
 
     a : ℕ
     a = variadicSum (S (S (S O))) O (S O) (S O)
+
+    -- ideja za dn: ali naredis lookup ali pa nekaj povecujes

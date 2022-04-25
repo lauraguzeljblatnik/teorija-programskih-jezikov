@@ -7,8 +7,8 @@ data Ctx : Set where
     _,_ : Ctx → Ty → Ctx
 
 data _∈_ : Ty → Ctx → Set where
-    Z : {A : Ty} {Γ : Ctx} → A ∈ (Γ , A)
-    S : {A B : Ty} {Γ : Ctx} → A ∈ Γ → A ∈ (Γ , B)
+    Z : {A : Ty} {Γ : Ctx} → A ∈ (Γ , A) --spr 0 je ok tipa
+    S : {A B : Ty} {Γ : Ctx} → A ∈ Γ → A ∈ (Γ , B) -- spr v repu je ok tipa
 
 data _⊢_ : Ctx → Ty → Set where
 
@@ -42,6 +42,65 @@ data _⊢_ : Ctx → Ty → Set where
         (Γ , A) ⊢ B →
         -----------
         Γ ⊢ (A ⇒ B)
+
+-------------------------------
+-- VAJE
+------------------------------
+
+ext : {Γ Δ : Ctx} → 
+    ({A : Ty} → A ∈ Γ → A ∈ Δ) → 
+    ---------------------------
+    {A B : Ty} → A ∈ (Γ , B) → A ∈ (Δ , B)
+ext {Δ = Δ} σ {A} Z = Z
+ext {Δ = Δ} σ (S x) = S (σ x)     
+    
+rename : {Γ Δ : Ctx} → 
+    ({A : Ty} → A ∈ Γ → A ∈ Δ) → 
+    ---------------------------
+    {A : Ty} → Γ ⊢ A → Δ ⊢ A
+rename σ {A} (VAR x) = VAR (σ x)
+rename σ {BOOL} TRUE = TRUE
+rename σ {BOOL} FALSE = FALSE
+rename σ {A} (IF x THEN x₁ ELSE x₂) = IF rename σ x THEN rename σ x₁ ELSE rename σ x₂
+rename σ {A} (x ∙ y) = rename σ x ∙ rename σ y
+rename σ {(_ ⇒ _)} (ƛ x) = ƛ (rename (ext σ) x)
+
+exts : {Γ Δ : Ctx } →
+    ({A : Ty} → A ∈ Γ → Δ ⊢ A ) → 
+    ---------------------------
+    {A B : Ty} →  A ∈ (Γ , B) → (Δ , B) ⊢ A
+exts σ {A} Z = VAR Z
+exts σ {A} (S x) = rename S (σ x)
+
+subsMulti : {Γ Δ : Ctx } →
+    ({A : Ty} → A ∈ Γ → Δ ⊢ A ) → --spremenljivke slikamo v izraze
+    ---------------------------
+    {A : Ty} →  Γ ⊢ A → Δ ⊢ A  --ravno substitucija 
+subsMulti σ {A} (VAR x) = σ x
+subsMulti σ {BOOL} TRUE = TRUE
+subsMulti σ {BOOL} FALSE = FALSE
+subsMulti σ {A} (IF x THEN x₁ ELSE x₂) = IF subsMulti σ x THEN subsMulti σ x₁ ELSE subsMulti σ x₂
+subsMulti σ {A} (x ∙ y) = subsMulti σ x ∙ subsMulti σ y
+subsMulti σ {(_ ⇒ _)} (ƛ x) = ƛ (subsMulti (exts σ) x)
+
+_[_] : {Γ : Ctx} {A B : Ty} → 
+    (Γ , B) ⊢ A → 
+    Γ ⊢ B → 
+    ----------------------
+    Γ ⊢ A 
+
+--- subs le prvi element, vse ostale pa le prepisemo 
+_[_] {Γ} {B = B} N M = subsMulti σ N
+    where 
+    σ : ∀ {A : Ty} → A ∈ (Γ , B) → Γ ⊢ A
+    σ Z = M
+    σ (S x) = VAR x 
+
+-- ⊢ je entails :)
+-- zdaj lahko zamenjamo ⇉ s predavanj
+----------------------------------------
+-- Δ, Γ sta dva konteksta
+--  Δ ⊢ A  : izraz A v kontekstu Δ
 
 data _⇉_ : Ctx → Ctx → Set where
     [] : {Δ : Ctx} → ∅ ⇉ Δ
@@ -118,3 +177,4 @@ progress (M ∙ N) with progress M
 ...     | is-value V = steps (APP-BETA V)
 ...     | steps N↝N' = steps (APP-STEP2 value-LAMBDA N↝N')
 progress (ƛ M) = is-value value-LAMBDA
+  
