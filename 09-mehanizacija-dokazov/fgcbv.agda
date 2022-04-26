@@ -85,7 +85,7 @@ rename-c : {Γ Δ : Ctx}
   → {A : Ty} → Γ ⊢c A → Δ ⊢c A
 rename-v ρ (VAR x) = VAR (ρ x)
 rename-v ρ TRUE = TRUE
-rename-v ρ FALSE = TRUE
+rename-v ρ FALSE = FALSE
 rename-v ρ (ƛ M) = ƛ (rename-c (extend-renaming ρ) M)
 rename-v ρ ⟨ V , W ⟩ = ⟨ rename-v ρ V , rename-v ρ W ⟩
 rename-c ρ (IF V THEN M₁ ELSE M₂) = 
